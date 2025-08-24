@@ -7,6 +7,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
 const errorHandler = require("./middlewares/errorHandler"); // ✅ should be a function
+const { authMiddleware, logout } = require('./controllers/authController');
 
 const app = express();
 
