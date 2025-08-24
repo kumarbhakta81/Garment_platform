@@ -1,29 +1,71 @@
 const express = require("express");
 const cors = require("cors");
+const morgan = require("morgan");
 require("dotenv").config();
 
-const authRoutes = require("./routes/authRoutes");   // ✅ should be a router
+// Import routes
+const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
-const errorHandler = require("./middlewares/errorHandler"); // ✅ should be a function
+const garmentRoutes = require('./routes/garments');
+const cartRoutes = require('./routes/cart');
+const wishlistRoutes = require('./routes/wishlist');
+
+// Import middleware
+const errorHandler = require("./middlewares/errorHandler");
+const { helmet, generalLimiter, authLimiter } = require("./middlewares/security");
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+// Security middleware
+app.use(helmet);
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true
+}));
 
-// Routes
+// Logging middleware
+app.use(morgan('combined'));
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Rate limiting
+app.use('/api/auth', authLimiter);
+app.use('/api', generalLimiter);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/garments', garmentRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
-// Logout (should be protected)
-app.post("/logout", authMiddleware, logout);
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    message: 'Route not found',
+    path: req.originalUrl
+  });
+});
 
-// Error handler
+// Error handler (must be last)
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+// Start server only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+}
+
+module.exports = app;
