@@ -19,9 +19,6 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 
-// Logout (should be protected)
-app.post("/logout", authMiddleware, logout);
-
 // Error handler
 app.use(errorHandler);
 
