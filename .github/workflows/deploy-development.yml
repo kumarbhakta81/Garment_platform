@@ -1,0 +1,53 @@
+name: Deploy to Development
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: AKIAQ3EGWAZHOFYKZXFV
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Create or Update EC2 Instance
+        run: |
+          chmod +x scripts/aws/create-ec2.sh
+          ./scripts/aws/create-ec2.sh development
+        env:
+          EC2_KEY_NAME: garment-platform-dev
+          INSTANCE_TYPE: t3.small
+          ENVIRONMENT: development
+      
+      - name: Deploy Application
+        run: |
+          chmod +x scripts/aws/deploy.sh
+          ./scripts/aws/deploy.sh development
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      
+      - name: Run Health Checks
+        run: |
+          chmod +x scripts/aws/health-check.sh
+          ./scripts/aws/health-check.sh development
+      
+      - name: Send Slack Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: '🚀 Development deployment completed!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+        continue-on-error: true

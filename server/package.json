@@ -10,7 +10,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "migrate:development": "echo 'Running development migrations...' && node -e \"console.log('Migrations would run here')\"",
+    "migrate:staging": "echo 'Running staging migrations...' && node -e \"console.log('Migrations would run here')\"",
+    "migrate:production": "echo 'Running production migrations...' && node -e \"console.log('Migrations would run here')\""
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

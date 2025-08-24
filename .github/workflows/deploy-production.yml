@@ -1,0 +1,58 @@
+name: Deploy to Production
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Manual Approval Required
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ secrets.GITHUB_TOKEN }}
+          approvers: kumarbhakta81
+          minimum-approvals: 1
+          issue-title: "Production Deployment Approval Required"
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: AKIAQ3EGWAZHOFYKZXFV
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Create Backup
+        run: |
+          chmod +x scripts/database/backup.sh
+          ./scripts/database/backup.sh production
+      
+      - name: Deploy with Blue-Green Strategy
+        run: |
+          chmod +x scripts/aws/deploy.sh
+          ./scripts/aws/deploy.sh production blue-green
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD_PROD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET_PROD }}
+      
+      - name: Post-Deployment Health Checks
+        run: |
+          ./scripts/aws/health-check.sh production
+          sleep 30
+          ./scripts/aws/health-check.sh production
+      
+      - name: Send Production Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: '🎉 Production deployment successful!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+        continue-on-error: true

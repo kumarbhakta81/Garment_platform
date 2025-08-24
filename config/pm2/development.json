@@ -1,0 +1,23 @@
+{
+  "name": "garment-backend-dev",
+  "script": "server.js",
+  "cwd": "/opt/garment-platform/backend/current",
+  "instances": 1,
+  "exec_mode": "fork",
+  "env": {
+    "NODE_ENV": "development",
+    "PORT": 3000,
+    "DB_HOST": "localhost",
+    "DB_PORT": 3306,
+    "DB_NAME": "garment_platform_dev",
+    "DB_USER": "garment_user",
+    "REDIS_URL": "redis://localhost:6379"
+  },
+  "error_file": "/opt/garment-platform/logs/backend-error.log",
+  "out_file": "/opt/garment-platform/logs/backend-out.log",
+  "log_file": "/opt/garment-platform/logs/backend-combined.log",
+  "time": true,
+  "autorestart": true,
+  "watch": false,
+  "max_memory_restart": "512M"
+}
