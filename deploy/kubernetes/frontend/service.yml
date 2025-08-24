@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: garment-admin-service
+  namespace: garment-${ENVIRONMENT}
+spec:
+  selector:
+    app: garment-admin
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

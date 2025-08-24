@@ -1,0 +1,56 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name garment-dev-cluster
+      
+      - name: Deploy Database Migrations
+        run: |
+          kubectl apply -f deploy/kubernetes/database/ -n garment-dev
+          kubectl wait --for=condition=ready pod -l app=mysql -n garment-dev --timeout=300s
+      
+      - name: Run Database Migrations
+        run: |
+          kubectl create job --from=cronjob/db-migration migration-$(date +%s) -n garment-dev
+      
+      - name: Deploy Backend
+        run: |
+          envsubst < deploy/kubernetes/backend/deployment.yml | kubectl apply -f - -n garment-dev
+          kubectl set image deployment/garment-backend garment-backend=kumarbhakta81/garment-backend:${{ github.sha }} -n garment-dev
+          kubectl rollout status deployment/garment-backend -n garment-dev --timeout=600s
+      
+      - name: Deploy Admin Portal
+        run: |
+          envsubst < deploy/kubernetes/frontend/deployment.yml | kubectl apply -f - -n garment-dev
+          kubectl set image deployment/garment-admin garment-admin=kumarbhakta81/garment-admin:${{ github.sha }} -n garment-dev
+          kubectl rollout status deployment/garment-admin -n garment-dev --timeout=600s
+      
+      - name: Run Health Checks
+        run: ./deploy/scripts/health-check.sh development
+      
+      - name: Send Slack Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Development deployment completed!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

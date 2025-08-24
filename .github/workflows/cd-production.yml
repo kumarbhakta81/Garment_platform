@@ -1,0 +1,64 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Manual Approval Required
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ secrets.GITHUB_TOKEN }}
+          approvers: kumarbhakta81
+          minimum-approvals: 1
+          issue-title: "Production Deployment Approval Required"
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Create Backup
+        run: ./deploy/scripts/backup.sh production
+      
+      - name: Blue-Green Deployment
+        run: |
+          # Deploy to green environment
+          kubectl apply -f deploy/kubernetes/backend/deployment-green.yml -n garment-prod
+          kubectl set image deployment/garment-backend-green garment-backend=kumarbhakta81/garment-backend:${{ github.sha }} -n garment-prod
+          kubectl rollout status deployment/garment-backend-green -n garment-prod --timeout=600s
+          
+          # Run health checks on green
+          ./deploy/scripts/health-check.sh production-green
+          
+          # Switch traffic to green
+          kubectl patch service garment-backend-service -p '{"spec":{"selector":{"version":"green"}}}' -n garment-prod
+          
+          # Wait and verify
+          sleep 30
+          ./deploy/scripts/health-check.sh production
+          
+          # Scale down blue
+          kubectl scale deployment garment-backend-blue --replicas=0 -n garment-prod
+      
+      - name: Post-Deployment Tests
+        run: |
+          npm run test:e2e:production
+      
+      - name: Send Production Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: '🚀 Production deployment successful!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
