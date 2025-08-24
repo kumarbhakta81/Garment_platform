@@ -1,7 +1,4 @@
 const http = require('http');
-const mysql = require('mysql2/promise');
-const redis = require('redis');
-require('dotenv').config();
 
 class HealthChecker {
   constructor() {
@@ -13,12 +10,6 @@ class HealthChecker {
     // Application health check
     this.addCheck('application', this.checkApplication.bind(this));
     
-    // Database health check
-    this.addCheck('database', this.checkDatabase.bind(this));
-    
-    // Redis health check
-    this.addCheck('redis', this.checkRedis.bind(this));
-    
     // System resources check
     this.addCheck('system', this.checkSystem.bind(this));
   }
@@ -29,7 +20,8 @@ class HealthChecker {
 
   async checkApplication() {
     return new Promise((resolve) => {
-      const req = http.get(`http://localhost:${process.env.PORT || 3000}/api/health`, (res) => {
+      const port = process.env.PORT || 3000;
+      const req = http.get(`http://localhost:${port}/api/health`, (res) => {
         resolve({
           status: res.statusCode === 200 ? 'healthy' : 'unhealthy',
           statusCode: res.statusCode,
@@ -54,55 +46,8 @@ class HealthChecker {
     });
   }
 
-  async checkDatabase() {
-    try {
-      const connection = await mysql.createConnection({
-        host: process.env.DB_HOST || 'localhost',
-        user: process.env.DB_USER || 'garment_user',
-        password: process.env.DB_PASSWORD || 'GarmentApp2024!',
-        database: process.env.DB_NAME || 'garment_platform_dev'
-      });
-
-      await connection.execute('SELECT 1');
-      await connection.end();
-
-      return {
-        status: 'healthy',
-        message: 'Database connection successful'
-      };
-    } catch (error) {
-      return {
-        status: 'unhealthy',
-        message: `Database connection failed: ${error.message}`
-      };
-    }
-  }
-
-  async checkRedis() {
-    try {
-      const client = redis.createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379'
-      });
-
-      await client.connect();
-      await client.ping();
-      await client.disconnect();
-
-      return {
-        status: 'healthy',
-        message: 'Redis connection successful'
-      };
-    } catch (error) {
-      return {
-        status: 'unhealthy',
-        message: `Redis connection failed: ${error.message}`
-      };
-    }
-  }
-
   async checkSystem() {
     const os = require('os');
-    const fs = require('fs').promises;
 
     try {
       // Check memory usage
@@ -111,9 +56,6 @@ class HealthChecker {
       const usedMem = totalMem - freeMem;
       const memUsagePercent = (usedMem / totalMem) * 100;
 
-      // Check disk usage
-      const stats = await fs.stat('/');
-      
       // Check CPU load
       const loadAvg = os.loadavg();
 
