@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    
+    rule_files:
+      - "rules/*.yml"
+    
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager:9093
+    
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+      
+      - job_name: 'garment-backend'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - garment-dev
+                - garment-staging
+                - garment-prod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: garment-backend
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+      
+      - job_name: 'garment-admin'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - garment-dev
+                - garment-staging
+                - garment-prod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: garment-admin
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+      
+      - job_name: 'mysql'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - garment-dev
+                - garment-staging
+                - garment-prod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: mysql
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+      
+      - job_name: 'redis'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - garment-dev
+                - garment-staging
+                - garment-prod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: redis
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace

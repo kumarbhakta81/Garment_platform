@@ -27,6 +27,7 @@ const signup = async (req, res, next) => {
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Signup error:', err); // <-- Add detailed error logging
     next(err); // pass to error handler
   }
@@ -49,8 +50,10 @@ const login = async (req, res, next) => {
         "INSERT INTO sessions (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))",
         [user.id, token]
       );
+      // eslint-disable-next-line no-console
       console.log('Session insert result:', result);
     } catch (sessionErr) {
+      // eslint-disable-next-line no-console
       console.error('Session insert error:', sessionErr);
     }
     res.json({ message: "Login successful", token });

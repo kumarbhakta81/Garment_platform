@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: garment-dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: garment-staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: garment-prod

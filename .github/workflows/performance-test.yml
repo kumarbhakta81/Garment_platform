@@ -1,0 +1,100 @@
+name: Performance Testing
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'  # Weekly on Monday at 4 AM
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+      
+      - name: Run Load Tests
+        run: |
+          k6 run --out json=load-test-results.json tests/performance/load-test.js
+        env:
+          TARGET_URL: ${{ github.event.inputs.environment == 'production' && 'https://api.garmentplatform.com' || 'https://api-staging.garmentplatform.com' }}
+      
+      - name: Upload Load Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: load-test-results
+          path: load-test-results.json
+
+  lighthouse-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@latest
+      
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli@0.12.x
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          LHCI_TARGET_URL: ${{ github.event.inputs.environment == 'production' && 'https://garmentplatform.com' || 'https://staging.garmentplatform.com' }}
+
+  database-performance:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: garment_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Dependencies
+        run: |
+          cd server && npm ci
+      
+      - name: Run Database Performance Tests
+        run: |
+          cd server && npm run test:performance
+        env:
+          DB_HOST: localhost
+          DB_PORT: 3306
+          DB_NAME: garment_test
+          DB_USER: root
+          DB_PASSWORD: testpassword

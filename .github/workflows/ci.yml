@@ -1,0 +1,207 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop, staging ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Backend Testing
+  backend-test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: garment_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+      
+      - name: Install Backend Dependencies
+        run: |
+          cd server
+          npm ci
+      
+      - name: Run Database Migrations
+        run: |
+          cd server
+          npm run migrate:test
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 3306
+          DB_NAME: garment_test
+          DB_USER: root
+          DB_PASSWORD: testpassword
+          REDIS_URL: redis://localhost:6379
+      
+      - name: Run Backend Tests
+        run: |
+          cd server
+          npm run test:coverage
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 3306
+          DB_NAME: garment_test
+          DB_USER: root
+          DB_PASSWORD: testpassword
+          REDIS_URL: redis://localhost:6379
+      
+      - name: Upload Backend Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./server/coverage/lcov.info
+          flags: backend
+
+  # Frontend Testing  
+  frontend-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+      
+      - name: Install Frontend Dependencies
+        run: |
+          cd client
+          npm ci
+      
+      - name: Run Frontend Tests
+        run: |
+          cd client
+          npm run test:coverage
+      
+      - name: Upload Frontend Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./client/coverage/lcov.info
+          flags: frontend
+
+  # Code Quality & Security
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: |
+          cd server && npm ci
+          cd ../client && npm ci
+      
+      - name: Run ESLint
+        run: |
+          cd server && npm run lint
+          cd ../client && npm run lint
+      
+      - name: Run Prettier Check
+        run: |
+          cd server && npm run format:check
+          cd ../client && npm run format:check
+      
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # Security Scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Snyk Security Scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+      
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'garment-platform'
+          path: '.'
+          format: 'ALL'
+      
+      - name: Upload OWASP Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: reports/
+
+  # Docker Build
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test, code-quality]
+    if: github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./docker/backend/Dockerfile
+          push: true
+          tags: |
+            kumarbhakta81/garment-backend:${{ github.sha }}
+            kumarbhakta81/garment-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build and Push Admin Portal Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          file: ./docker/admin-portal/Dockerfile
+          push: true
+          tags: |
+            kumarbhakta81/garment-admin:${{ github.sha }}
+            kumarbhakta81/garment-admin:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
