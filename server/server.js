@@ -29,7 +29,7 @@ app.use('/api/users', userRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Garment Platform API is running',
+    message: 'Product Platform API is running',
     timestamp: new Date().toISOString()
   });
 });
