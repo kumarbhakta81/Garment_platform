@@ -3,6 +3,9 @@ const cors = require("cors");
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");   // ✅ should be a router
+const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
+const userRoutes = require('./routes/userRoutes');
 const errorHandler = require("./middlewares/errorHandler"); // ✅ should be a function
 
 const app = express();
@@ -12,6 +15,12 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/users', userRoutes);
+
+// Logout (should be protected)
+app.post("/logout", authMiddleware, logout);
 
 // Error handler
 app.use(errorHandler);
