@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+**/node_modules/
 
 # testing
 /coverage
@@ -11,6 +12,7 @@
 # production
 /build
 /dist
+**/build/
 
 # misc
 .DS_Store
@@ -40,3 +42,6 @@ yarn-error.log*
 .idea/
 *.swp
 *.swo
+
+# Build cache
+**/.cache/
