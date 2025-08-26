@@ -23,38 +23,31 @@ jobs:
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name garment-staging-cluster
       
-      - name: Deploy Database Migrations
-        run: |
-          kubectl apply -f deploy/kubernetes/database/ -n garment-staging
-          kubectl wait --for=condition=ready pod -l app=mysql -n garment-staging --timeout=300s
-      
-      - name: Run Database Migrations
-        run: |
-          kubectl create job --from=cronjob/db-migration migration-$(date +%s) -n garment-staging
-      
       - name: Deploy Backend
         run: |
-          envsubst < deploy/kubernetes/backend/deployment.yml | kubectl apply -f - -n garment-staging
           kubectl set image deployment/garment-backend garment-backend=kumarbhakta81/garment-backend:${{ github.sha }} -n garment-staging
           kubectl rollout status deployment/garment-backend -n garment-staging --timeout=600s
       
-      - name: Deploy Admin Portal
+      - name: Deploy Frontend
         run: |
-          envsubst < deploy/kubernetes/frontend/deployment.yml | kubectl apply -f - -n garment-staging
           kubectl set image deployment/garment-admin garment-admin=kumarbhakta81/garment-admin:${{ github.sha }} -n garment-staging
           kubectl rollout status deployment/garment-admin -n garment-staging --timeout=600s
       
       - name: Run Health Checks
         run: ./deploy/scripts/health-check.sh staging
       
+      - name: Setup Node.js for Integration Tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install Dependencies for Integration Tests
+        run: |
+          npm ci
+      
       - name: Run Integration Tests
         run: |
           npm run test:integration:staging
-      
-      - name: Send Slack Notification
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          text: 'Staging deployment completed!'
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          STAGING_API_URL: https://api-staging.garmentplatform.com
