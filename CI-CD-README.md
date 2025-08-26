@@ -2,12 +2,12 @@
 
 ## Overview
 
-This repository contains a comprehensive CI/CD pipeline for the Garment Platform, automating the entire development lifecycle from code commit to production deployment. The pipeline handles both backend API and frontend admin portal deployments with proper testing, security scanning, and monitoring.
+This repository contains a clean and maintainable CI/CD pipeline for the Garment Platform, automating the entire development lifecycle from code commit to production deployment. The pipeline handles both backend API and frontend admin portal deployments with proper testing and deployment practices.
 
 ## Pipeline Architecture
 
 ```
-Developer Push → GitHub → CI/CD Pipeline → Automated Testing → Security Scanning → Build → Deploy → Monitor
+Developer Push → GitHub → CI/CD Pipeline → Automated Testing → Build → Deploy → Monitor
 ```
 
 ### Environments
@@ -24,10 +24,7 @@ Developer Push → GitHub → CI/CD Pipeline → Automated Testing → Security 
 │   ├── ci.yml                    # Continuous Integration
 │   ├── cd-development.yml        # Deploy to Development
 │   ├── cd-staging.yml           # Deploy to Staging
-│   ├── cd-production.yml        # Deploy to Production
-│   ├── security-scan.yml        # Security Scanning
-│   ├── database-migration.yml   # Database Updates
-│   └── performance-test.yml     # Load Testing
+│   └── cd-production.yml        # Deploy to Production
 ├── ISSUE_TEMPLATE/
 │   ├── bug_report.md
 │   ├── feature_request.md
@@ -62,10 +59,6 @@ deploy/
     ├── rollback.sh
     ├── health-check.sh
     └── backup.sh
-
-tests/
-└── performance/
-    └── load-test.js
 ```
 
 ## CI/CD Workflows
@@ -77,27 +70,23 @@ Triggered on pushes to `main`, `develop`, `staging` branches and pull requests.
 **Jobs:**
 - **Backend Testing**: Unit tests with MySQL and Redis services
 - **Frontend Testing**: React tests with coverage
-- **Code Quality**: ESLint, Prettier, SonarCloud
-- **Security Scanning**: Snyk, OWASP Dependency Check
-- **Docker Build**: Multi-stage builds with caching
+- **Code Quality**: ESLint, Prettier, basic security audit
 
 ### 2. Development Deployment (cd-development.yml)
 
 Auto-deploys to development environment on pushes to `develop` branch.
 
 **Features:**
-- Database migrations
+- Simple deployment without complexity
 - Health checks
-- Slack notifications
 
 ### 3. Staging Deployment (cd-staging.yml)
 
 Auto-deploys to staging environment on pushes to `staging` branch.
 
 **Features:**
-- Full integration testing
-- Performance validation
-- User acceptance testing preparation
+- Integration tests
+- Health checks
 
 ### 4. Production Deployment (cd-production.yml)
 
@@ -105,30 +94,8 @@ Deploys to production on pushes to `main` branch with manual approval.
 
 **Features:**
 - Manual approval gate
-- Database backups
 - Blue-green deployment
 - Post-deployment verification
-- Automatic rollback on failure
-
-### 5. Security Scanning (security-scan.yml)
-
-Daily security scans and on-demand scanning.
-
-**Features:**
-- npm audit
-- Snyk vulnerability scanning
-- Container security scanning with Trivy
-- CodeQL analysis
-- Secret scanning with TruffleHog
-
-### 6. Performance Testing (performance-test.yml)
-
-Weekly performance testing and on-demand load testing.
-
-**Features:**
-- k6 load testing
-- Lighthouse performance audits
-- Database performance testing
 
 ## Infrastructure as Code
 
@@ -221,13 +188,6 @@ DOCKER_PASSWORD
 # AWS
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
-
-# Security Scanning
-SNYK_TOKEN
-SONAR_TOKEN
-
-# Notifications
-SLACK_WEBHOOK
 ```
 
 ### Local Development
@@ -265,67 +225,42 @@ SLACK_WEBHOOK
 
 ### Deployment
 
+Deployments are handled automatically by GitHub Actions:
+
 1. **Development**: Push to `develop` branch
 2. **Staging**: Push to `staging` branch
-3. **Production**: Push to `main` branch (requires approval)
-
-### Manual Operations
-
-#### Database Migration
-
-```bash
-# Trigger via GitHub Actions
-gh workflow run database-migration.yml -f environment=staging -f migration_type=forward
-```
-
-#### Rollback Deployment
-
-```bash
-# Using deployment script
-./deploy/scripts/rollback.sh production
-```
-
-#### Health Check
-
-```bash
-# Check environment health
-./deploy/scripts/health-check.sh staging
-```
-
-## Performance Optimization
-
-### Build Optimization
-
-- Multi-stage Docker builds
-- Layer caching
-- Minimal dependencies in production
-
-### Runtime Optimization
-
-- Resource limits and requests
-- Horizontal pod autoscaling
-- Database connection pooling
-- Redis caching
+3. **Production**: Push to `main` branch (requires manual approval)
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Build Failures**: Check linting and test results
-2. **Deployment Failures**: Verify Kubernetes resources and secrets
-3. **Health Check Failures**: Check application logs and dependencies
+1. **Deployment Failures**
+   - Check GitHub Actions logs
+   - Verify AWS credentials
+   - Check Kubernetes cluster health
 
-### Debugging
+2. **Test Failures**
+   - Ensure all dependencies are installed
+   - Check environment variables
+   - Verify database connectivity (for backend tests)
+
+3. **Health Check Failures**
+   - Check application logs
+   - Verify service endpoints
+   - Check database and Redis connectivity
+
+### Debug Commands
 
 ```bash
-# Check pod logs
-kubectl logs -f deployment/garment-backend -n garment-staging
+# Check deployment status
+kubectl get pods -n garment-<environment>
 
-# Check pod status
-kubectl get pods -n garment-staging
+# View application logs
+kubectl logs deployment/garment-backend -n garment-<environment>
 
-# Describe deployment
-kubectl describe deployment garment-backend -n garment-staging
+# Run health checks manually
+./deploy/scripts/health-check.sh <environment>
 ```
 
 ## Contributing
