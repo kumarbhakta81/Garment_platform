@@ -12,7 +12,11 @@ export const login = async (data) => {
 
 export const logout = async () => {
   const token = localStorage.getItem('token');
-  return axios.post(`${API_URL}/logout`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  return axios.post(
+    `${API_URL}/logout`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
 };

@@ -14,7 +14,9 @@ const UserManagement = () => {
     const data = await getUsers();
     setUsers(data);
   };
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleDelete = async (id) => {
     await deleteUser(id);
@@ -35,9 +37,10 @@ const UserManagement = () => {
     fetchUsers();
   };
 
-  const filtered = users.filter(u =>
-    u.username.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+  const filtered = users.filter(
+    (u) =>
+      u.username.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -48,7 +51,7 @@ const UserManagement = () => {
           className="form-control mb-2"
           placeholder="Search by username or email"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
         />
         {message && <div className="alert alert-success">{message}</div>}
         <table className="table table-bordered table-hover">
@@ -61,14 +64,23 @@ const UserManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(user => (
+            {filtered.map((user) => (
               <tr key={user.id}>
                 <td>{user.id}</td>
                 <td>{user.username}</td>
                 <td>{user.email}</td>
                 <td>
-                  <Button variant="primary" size="sm" onClick={() => handleEdit(user)} className="me-2">Edit</Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(user.id)}>Delete</Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleEdit(user)}
+                    className="me-2"
+                  >
+                    Edit
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => handleDelete(user.id)}>
+                    Delete
+                  </Button>
                 </td>
               </tr>
             ))}
@@ -85,7 +97,7 @@ const UserManagement = () => {
                 <Form.Control
                   type="text"
                   value={editForm.username}
-                  onChange={e => setEditForm({ ...editForm, username: e.target.value })}
+                  onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
                 />
               </Form.Group>
               <Form.Group className="mb-3">
@@ -93,14 +105,18 @@ const UserManagement = () => {
                 <Form.Control
                   type="email"
                   value={editForm.email}
-                  onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                 />
               </Form.Group>
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button variant="primary" onClick={handleUpdate}>Save</Button>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleUpdate}>
+              Save
+            </Button>
           </Modal.Footer>
         </Modal>
       </div>

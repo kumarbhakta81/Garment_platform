@@ -27,11 +27,26 @@ const Dashboard = () => {
       <Header />
       <main className="flex-fill container py-4 bg-light">
         <div className="mb-3">
-          <button className={`btn btn-outline-primary me-2 ${tab==='products'&&'active'}`} onClick={()=>setTab('products')}>Products</button>
-          <button className={`btn btn-outline-primary me-2 ${tab==='categories'&&'active'}`} onClick={()=>setTab('categories')}>Categories</button>
-          <button className={`btn btn-outline-primary ${tab==='users'&&'active'}`} onClick={()=>setTab('users')}>Users</button>
+          <button
+            className={`btn btn-outline-primary me-2 ${tab === 'products' && 'active'}`}
+            onClick={() => setTab('products')}
+          >
+            Products
+          </button>
+          <button
+            className={`btn btn-outline-primary me-2 ${tab === 'categories' && 'active'}`}
+            onClick={() => setTab('categories')}
+          >
+            Categories
+          </button>
+          <button
+            className={`btn btn-outline-primary ${tab === 'users' && 'active'}`}
+            onClick={() => setTab('users')}
+          >
+            Users
+          </button>
         </div>
-        {tab==='products' && (
+        {tab === 'products' && (
           <div className="row">
             <section className="col-md-12 mb-4">
               <div className="card shadow-sm">
@@ -44,7 +59,7 @@ const Dashboard = () => {
             </section>
           </div>
         )}
-        {tab==='categories' && (
+        {tab === 'categories' && (
           <div className="row">
             <section className="col-md-12 mb-4">
               <div className="card shadow-sm">
@@ -57,7 +72,7 @@ const Dashboard = () => {
             </section>
           </div>
         )}
-        {tab==='users' && <UserManagement />}
+        {tab === 'users' && <UserManagement />}
       </main>
       <Footer />
     </div>

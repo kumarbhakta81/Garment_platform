@@ -10,7 +10,7 @@ const Categories = ({ onEdit }) => {
     <div>
       <h2>Categories</h2>
       <ul>
-        {categories.map(cat => (
+        {categories.map((cat) => (
           <li key={cat._id}>
             {cat.name}
             <button onClick={() => onEdit(cat)}>Edit</button>

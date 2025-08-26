@@ -6,7 +6,7 @@ const CategoryForm = ({ selected, onSave }) => {
   useEffect(() => {
     setName(selected ? selected.name : '');
   }, [selected]);
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (selected) {
       await updateCategory(selected._id, { name });
@@ -17,13 +17,13 @@ const CategoryForm = ({ selected, onSave }) => {
     setName('');
   };
   return (
-    <form onSubmit={handleSubmit} style={{marginBottom:'1rem'}}>
+    <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
       <input
         value={name}
-        onChange={e => setName(e.target.value)}
+        onChange={(e) => setName(e.target.value)}
         placeholder="Category Name"
         required
-        style={{marginRight:'1rem'}}
+        style={{ marginRight: '1rem' }}
       />
       <button type="submit">{selected ? 'Update' : 'Add'} Category</button>
     </form>

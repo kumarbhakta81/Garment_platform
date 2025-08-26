@@ -10,7 +10,7 @@ const ProductForm = ({ selected, onSave }) => {
     setPrice(selected ? selected.price : '');
     setDescription(selected ? selected.description : '');
   }, [selected]);
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const product = { name, price, description };
     if (selected) {
@@ -24,27 +24,27 @@ const ProductForm = ({ selected, onSave }) => {
     setDescription('');
   };
   return (
-    <form onSubmit={handleSubmit} style={{marginBottom:'1rem'}}>
+    <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
       <input
         value={name}
-        onChange={e => setName(e.target.value)}
+        onChange={(e) => setName(e.target.value)}
         placeholder="Product Name"
         required
-        style={{marginRight:'1rem'}}
+        style={{ marginRight: '1rem' }}
       />
       <input
         value={price}
-        onChange={e => setPrice(e.target.value)}
+        onChange={(e) => setPrice(e.target.value)}
         placeholder="Price"
         type="number"
         required
-        style={{marginRight:'1rem'}}
+        style={{ marginRight: '1rem' }}
       />
       <input
         value={description}
-        onChange={e => setDescription(e.target.value)}
+        onChange={(e) => setDescription(e.target.value)}
         placeholder="Description"
-        style={{marginRight:'1rem'}}
+        style={{ marginRight: '1rem' }}
       />
       <button type="submit">{selected ? 'Update' : 'Add'} Product</button>
     </form>

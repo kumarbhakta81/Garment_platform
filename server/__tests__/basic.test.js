@@ -3,7 +3,7 @@ const express = require('express');
 
 // Mock the database pool for testing
 jest.mock('../config/db', () => ({
-  query: jest.fn()
+  query: jest.fn(),
 }));
 
 describe('Basic API Tests', () => {
@@ -13,9 +13,7 @@ describe('Basic API Tests', () => {
       res.status(404).json({ message: 'Route not found' });
     });
 
-    const response = await request(app)
-      .get('/unknown')
-      .expect(404);
+    const response = await request(app).get('/unknown').expect(404);
 
     expect(response.body.message).toBe('Route not found');
   });

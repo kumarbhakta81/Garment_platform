@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getCategories, createCategory, updateCategory } = require('../controllers/categoryController');
+const {
+  getCategories,
+  createCategory,
+  updateCategory,
+} = require('../controllers/categoryController');
 const authenticateJWT = require('../middlewares/authenticateJWT');
 
 router.get('/', authenticateJWT, getCategories); // List all categories
