@@ -16,7 +16,22 @@ const Login = ({ onLogin, goToSignup }) => {
     setMessage('');
     try {
       const res = await login(form);
-      localStorage.setItem('token', res.data.token);
+      const token = res.data.token;
+      
+      localStorage.setItem('token', token);
+      
+      // For demo purposes, set role based on email
+      // In real app, this would come from the JWT token or API response
+      let role = 'retailer';
+      if (form.email.includes('admin')) {
+        role = 'admin';
+      } else if (form.email.includes('wholesaler')) {
+        role = 'wholesaler';
+      }
+      
+      localStorage.setItem('userRole', role);
+      localStorage.setItem('userEmail', form.email);
+      
       setMessage('Login successful!');
       setForm({ email: '', password: '' });
       setLoading(false);
@@ -28,19 +43,92 @@ const Login = ({ onLogin, goToSignup }) => {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '2rem auto', padding: 24, border: '1px solid #ddd', borderRadius: 8 }}>
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <input name="email" value={form.email} onChange={handleChange} placeholder="Email" required type="email" style={{ width: '100%', marginBottom: 8 }} />
-        <input name="password" value={form.password} onChange={handleChange} placeholder="Password" required type="password" style={{ width: '100%', marginBottom: 8 }} />
-        <button type="submit" style={{ width: '100%' }} disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
-      </form>
-      <div style={{marginTop:12}}>
-        <span>Don't have an account? </span>
-        <button type="button" onClick={goToSignup} style={{background:'none',color:'#007bff',border:'none',cursor:'pointer',textDecoration:'underline'}}>Sign Up</button>
+    <div className="container">
+      <div className="row justify-content-center">
+        <div className="col-md-6 col-lg-4">
+          <div className="card shadow">
+            <div className="card-body">
+              <h2 className="card-title text-center mb-4">Login</h2>
+              
+              {message && (
+                <div className={`alert ${message.includes('success') ? 'alert-success' : 'alert-danger'} alert-dismissible fade show`}>
+                  {message}
+                  <button type="button" className="btn-close" onClick={() => setMessage('')}></button>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label htmlFor="email" className="form-label">Email</label>
+                  <input 
+                    id="email"
+                    name="email" 
+                    type="email"
+                    className="form-control"
+                    value={form.email} 
+                    onChange={handleChange} 
+                    placeholder="Enter your email" 
+                    required 
+                  />
+                </div>
+                
+                <div className="mb-3">
+                  <label htmlFor="password" className="form-label">Password</label>
+                  <input 
+                    id="password"
+                    name="password" 
+                    type="password"
+                    className="form-control"
+                    value={form.password} 
+                    onChange={handleChange} 
+                    placeholder="Enter your password" 
+                    required 
+                  />
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className="btn btn-primary w-100"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Logging in...
+                    </>
+                  ) : (
+                    'Login'
+                  )}
+                </button>
+              </form>
+              
+              <div className="text-center mt-3">
+                <span>Don't have an account? </span>
+                <button 
+                  type="button" 
+                  onClick={goToSignup} 
+                  className="btn btn-link p-0 text-decoration-none"
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              {/* Demo credentials info */}
+              <div className="mt-4 p-3 bg-light rounded">
+                <small className="text-muted">
+                  <strong>Demo Credentials:</strong><br/>
+                  Admin: admin@example.com<br/>
+                  Wholesaler: wholesaler@example.com<br/>
+                  Retailer: retailer@example.com<br/>
+                  Password: any password
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      {message && <p style={{color: message.includes('success') ? 'green' : 'red'}}>{message}</p>}
     </div>
   );
 };
+
 export default Login;

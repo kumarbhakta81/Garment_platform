@@ -1,42 +1,37 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5001/api/products';
+const API_URL = 'http://localhost:5001/api/samples';
 
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export const getProducts = async (filters = {}) => {
+export const getSamples = async (filters = {}) => {
   const params = new URLSearchParams(filters);
   const res = await axios.get(`${API_URL}?${params}`, { headers: getAuthHeader() });
   return res.data;
 };
 
-export const addProduct = async (formData) => {
+export const createSample = async (formData) => {
   const res = await axios.post(API_URL, formData, { 
     headers: { ...getAuthHeader(), 'Content-Type': 'multipart/form-data' }
   });
   return res.data;
 };
 
-export const updateProduct = async (id, formData) => {
+export const updateSample = async (id, formData) => {
   const res = await axios.put(`${API_URL}/${id}`, formData, { 
     headers: { ...getAuthHeader(), 'Content-Type': 'multipart/form-data' }
   });
   return res.data;
 };
 
-export const deleteProduct = async (id) => {
+export const deleteSample = async (id) => {
   await axios.delete(`${API_URL}/${id}`, { headers: getAuthHeader() });
 };
 
-export const updateProductStatus = async (id, status) => {
+export const updateSampleStatus = async (id, status) => {
   const res = await axios.patch(`${API_URL}/${id}/status`, { status }, { headers: getAuthHeader() });
-  return res.data;
-};
-
-export const getProductAnalytics = async () => {
-  const res = await axios.get(`${API_URL}/analytics`, { headers: getAuthHeader() });
   return res.data;
 };
