@@ -10,12 +10,14 @@ const {
 } = require('../controllers/productController');
 const authenticateJWT = require('../middlewares/authenticateJWT');
 const { uploadProductImages, handleUploadError } = require('../middlewares/uploadMiddleware');
+const { productValidationRules, statusValidationRules, handleValidationErrors } = require('../middlewares/validation');
+const { uploadLimiter } = require('../middlewares/rateLimiting');
 
 router.get('/', authenticateJWT, getProducts); // List all products with filtering
-router.post('/', authenticateJWT, uploadProductImages, handleUploadError, createProduct); // Create a product with images
-router.put('/:id', authenticateJWT, uploadProductImages, handleUploadError, updateProduct); // Edit a product
+router.post('/', authenticateJWT, uploadLimiter, uploadProductImages, handleUploadError, productValidationRules(), handleValidationErrors, createProduct); // Create a product with images
+router.put('/:id', authenticateJWT, uploadLimiter, uploadProductImages, handleUploadError, productValidationRules(), handleValidationErrors, updateProduct); // Edit a product
 router.delete('/:id', authenticateJWT, deleteProduct); // Delete a product
-router.patch('/:id/status', authenticateJWT, updateProductStatus); // Approve/reject product (admin)
+router.patch('/:id/status', authenticateJWT, statusValidationRules(), handleValidationErrors, updateProductStatus); // Approve/reject product (admin)
 router.get('/analytics', authenticateJWT, getProductAnalytics); // Get analytics for wholesaler
 
 module.exports = router;
