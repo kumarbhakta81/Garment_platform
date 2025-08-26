@@ -30,13 +30,17 @@ function App() {
     <div>
       {isAuthenticated ? (
         <>
-          <button style={{position:'absolute',top:10,right:10}} onClick={handleLogout}>Logout</button>
+          <button style={{ position: 'absolute', top: 10, right: 10 }} onClick={handleLogout}>
+            Logout
+          </button>
           <Dashboard />
         </>
       ) : (
         <>
           {page === 'login' && <Login onLogin={handleLogin} goToSignup={() => setPage('signup')} />}
-          {page === 'signup' && <Signup onSignup={handleSignup} goToLogin={() => setPage('login')} />}
+          {page === 'signup' && (
+            <Signup onSignup={handleSignup} goToLogin={() => setPage('login')} />
+          )}
         </>
       )}
     </div>

@@ -10,7 +10,7 @@ const Products = ({ onEdit }) => {
     <div>
       <h2>Products</h2>
       <ul>
-        {products.map(prod => (
+        {products.map((prod) => (
           <li key={prod._id}>
             {prod.name} - ${prod.price}
             <button onClick={() => onEdit(prod)}>Edit</button>
